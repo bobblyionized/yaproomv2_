@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YapRoom Chat</title>
+  <style>
+    /* Base Reset & Global Styles */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8f8f8; /* Light mode background */
+      color: #333;
+      transition: background 0.3s, color 0.3s;
+    }
+    /* When dark mode is on, set the entire page background dark */
+    body.dark-mode {
+      background: #2f3136 !important; /* The entire place goes dark */
+      color: #dcdcdc !important;
+    }
+
+    /* Container - no explicit background so dark mode can show through */
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    body.dark-mode .container {
+      background: none; /* or transparent, so the dark body background shows */
+    }
+
+    /* Main Menu */
+    #mainMenu {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    body.dark-mode #mainMenu {
+      background: #36393f;
+      border-color: #4f545c;
+      color: #dcdcdc;
+    }
+    #mainMenu h2 {
+      margin-bottom: 12px;
+    }
+    #loginForm, #accountInfo {
+      margin-top: 12px;
+    }
+    #loginForm input[type="text"],
+    #loginForm input[type="password"],
+    #accountInfo input[type="text"],
+    #accountInfo input[type="password"] {
+      width: 80%;
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    body.dark-mode #loginForm input,
+    body.dark-mode #accountInfo input {
+      background: #40444b;
+      color: #dcdcdc;
+      border: 1px solid #4f545c;
+    }
+    #loginForm button, #accountInfo button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #7289da;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin: 4px;
+    }
+    #loginForm button:hover, #accountInfo button:hover {
+      background: #677bc4;
+    }
+
+    /* Chat Wrapper: Sidebar + Chat Area */
+    #chatWrapper {
+      display: none;
+      height: 90vh;
+      display: flex;
+    }
+
+    /* Server List Sidebar */
+    #serverList {
+      width: 80px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-y: auto;
+      margin-right: 10px;
+    }
+    body.dark-mode #serverList {
+      background: #36393f;
+      border-color: #4f545c;
+      color: #dcdcdc;
+    }
+    #serverList .server-item {
+      width: 60px;
+      height: 60px;
+      background: #7289da;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      text-align: center;
+      padding: 4px;
+      font-size: 10px;
+    }
+    #serverList .server-item.active {
+      border: 3px solid #fff;
+    }
+    #serverList .plus-button {
+      width: 70px;
+      height: 70px;
+      background: #ccc;
+      border-radius: 8px;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      margin-top: auto;
+      font-size: 35px;
+      line-height: 0;
+    }
+    body.dark-mode #serverList .server-item {
+      background: #4f545c;
+    }
+    body.dark-mode #serverList .plus-button {
+      background: #4f545c;
+      color: #dcdcdc;
+    }
+
+    /* Chat Area */
+    #chatArea {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+    }
+    body.dark-mode #chatArea {
+      background: #36393f;
+      border-color: #4f545c;
+      color: #dcdcdc;
+    }
+    #chatHeader {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    #chatHeader h2 {
+      font-size: 20px;
+    }
+    #chatHeader .header-buttons button {
+      padding: 6px 12px;
+      font-size: 14px;
+      background: #7289da;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+      margin-left: 4px;
+    }
+    #messages {
+      flex: 1;
+      list-style: none;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: #fff;
+      overflow-y: auto;
+      margin-bottom: 8px;
+    }
+    body.dark-mode #messages {
+      background: #40444b;
+      border-color: #4f545c;
+    }
+    #messages li {
+      padding: 6px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+      white-space: normal;
+      overflow-wrap: break-word;
+      word-break: break-all;
+    }
+    #messages li:last-child {
+      border-bottom: none;
+    }
+    body.dark-mode #messages li {
+      border-bottom: 1px solid #4f545c;
+    }
+    #chatControls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    #chatControls textarea {
+      flex: 1;
+      padding: 10px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      resize: none;
+    }
+    body.dark-mode #chatControls textarea {
+      background: #40444b;
+      color: #dcdcdc;
+      border: 1px solid #4f545c;
+    }
+    #chatControls button {
+      padding: 10px 16px;
+      font-size: 14px;
+      background: #7289da;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #chatControls button:hover {
+      background: #677bc4;
+    }
+    /* Member List */
+    #memberListContainer {
+      margin-top: 10px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 8px;
+    }
+    body.dark-mode #memberListContainer {
+      background: #36393f;
+      border-color: #4f545c;
+      color: #dcdcdc;
+    }
+    #memberListContainer h3 {
+      margin-bottom: 6px;
+      font-size: 16px;
+    }
+    #memberList {
+      list-style: none;
+      padding: 0;
+      font-size: 14px;
+    }
+    #memberList li {
+      padding: 4px;
+      border-bottom: 1px solid #eee;
+    }
+    #memberList li:last-child {
+      border-bottom: none;
+    }
+    /* Modals Base */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+      background-color: #fff;
+      margin: 15% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 350px;
+      text-align: center;
+      border-radius: 8px;
+    }
+    body.dark-mode .modal-content {
+      background-color: #36393f;
+      color: #dcdcdc;
+      border-color: #4f545c;
+    }
+    /* Delete Modal (popover style) */
+    #deleteModal {
+      display: none;
+      position: absolute;
+      z-index: 2100;
+      background-color: #fff;
+      padding: 10px;
+      border: 1px solid #888;
+      border-radius: 4px;
+    }
+    body.dark-mode #deleteModal {
+      background-color: #36393f;
+      color: #dcdcdc;
+      border-color: #4f545c;
+    }
+    /* Settings Modal */
+    #settingsScreen .modal-content {
+      width: 350px;
+    }
+    #settingsContent label {
+      display: block;
+      margin-bottom: 12px;
+      font-size: 16px;
+    }
+    #settingsContent select,
+    #settingsContent input[type="file"] {
+      margin-bottom: 12px;
+      padding: 6px;
+      font-size: 14px;
+    }
+    #settingsContent button {
+      padding: 8px 16px;
+      font-size: 14px;
+      background: #7289da;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+    /* Additional Settings: Fonts, Music & Notifications */
+    #settingsFonts,
+    #settingsMusic,
+    #settingsNotifications {
+      margin-bottom: 16px;
+      text-align: left;
+    }
+    #settingsFonts label,
+    #settingsMusic label,
+    #settingsNotifications label {
+      font-size: 14px;
+      margin-bottom: 4px;
+      display: block;
+    }
+    /* Dark Mode Overrides for Inputs/Buttons are above. */
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Main Menu -->
+    <div id="mainMenu">
+      <h2>Welcome to YapRoom Chat</h2>
+      <!-- Login/Register Form -->
+      <div id="loginForm">
+        <input type="text" id="accUsername" placeholder="Enter username (max 20 chars)" maxlength="20" />
+        <br />
+        <input type="password" id="accPassword" placeholder="Enter password" />
+        <br />
+        <button onclick="registerOrLoginAccount()">Login / Register</button>
+        <br />
+        <button onclick="openSettings()">Settings</button>
+      </div>
+      <!-- Account Info -->
+      <div id="accountInfo" style="display:none;">
+        <p>Logged in as: <span id="currentAcc"></span></p>
+        <button onclick="startChat()">Start Chatting</button>
+        <br />
+        <button onclick="changeUsername()">Change Username</button>
+        <button onclick="changePassword()">Change Password</button>
+        <button onclick="logoutAccount()">Log Out</button>
+        <br />
+        <button onclick="openSettings()">Settings</button>
+      </div>
+    </div>
+
+    <!-- Chat Wrapper -->
+    <div id="chatWrapper" style="display:none;">
+      <!-- Server List Sidebar -->
+      <div id="serverList">
+        <!-- Public Chat and channels appear here -->
+      </div>
+      <!-- Main Chat Area -->
+      <div id="chatArea">
+        <div id="chatHeader">
+          <h2 id="currentServerName">Public Chat</h2>
+          <div class="header-buttons">
+            <button onclick="openSettings()">Settings</button>
+            <button onclick="returnToMainMenu()">Return to Main Menu</button>
+          </div>
+        </div>
+        <ul id="messages"></ul>
+        <div id="chatControls">
+          <textarea id="messageInput" placeholder="Type your message (max 100 chars)"></textarea>
+          <button onclick="sendMessage()">Send</button>
+        </div>
+        <!-- Global Member List -->
+        <div id="memberListContainer">
+          <h3>Members Online</h3>
+          <ul id="memberList"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plus Modal -->
+  <div id="plusModal" class="modal">
+    <div class="modal-content">
+      <h3>Select Action</h3>
+      <button onclick="selectPlusAction('create')">Create Room</button>
+      <button onclick="selectPlusAction('join')">Join Room</button>
+      <button onclick="selectPlusAction('dm')">Add DM</button>
+      <button onclick="closePlusModal()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Input Modal -->
+  <div id="inputModal" class="modal">
+    <div class="modal-content">
+      <h3 id="inputModalTitle">Input</h3>
+      <input type="text" id="inputModalField" placeholder="" />
+      <br />
+      <button onclick="submitInputModal()">Submit</button>
+      <button onclick="closeInputModal()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Delete Modal (popover) -->
+  <div id="deleteModal">
+    <p id="deleteModalText">Delete this channel?</p>
+    <button onclick="confirmDeleteChannel()">Delete</button>
+    <button onclick="closeDeleteModal()">Cancel</button>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsScreen" class="modal">
+    <div id="settingsContent" class="modal-content">
+      <h2>Settings</h2>
+      <label>
+        <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()" />
+        Dark Mode
+      </label>
+      <div id="settingsFonts">
+        <label for="fontSelect">Choose Font:</label>
+        <select id="fontSelect" onchange="changeUIFont()">
+          <option value="Arial, sans-serif">Arial</option>
+          <option value="Georgia, serif">Georgia</option>
+          <option value="Courier New, monospace">Courier New</option>
+          <option value="'Comic Sans MS', cursive, sans-serif">Comic Sans MS</option>
+          <option value="Roboto, sans-serif">Roboto</option>
+          <option value="'Times New Roman', serif">Times New Roman</option>
+          <option value="Verdana, sans-serif">Verdana</option>
+          <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+          <option value="'Lucida Sans Unicode', sans-serif">Lucida Sans Unicode</option>
+          <option value="'Open Sans', sans-serif">Open Sans</option>
+          <option value="Lato, sans-serif">Lato</option>
+          <option value="Montserrat, sans-serif">Montserrat</option>
+        </select>
+      </div>
+      <div id="settingsMusic">
+        <label for="musicFileInput">Background Music (mp3):</label>
+        <input type="file" id="musicFileInput" accept="audio/*" />
+        <br />
+        <button onclick="toggleMusic()">Play/Pause Music</button>
+        <br />
+        <label for="musicVolume">Music Volume:</label>
+        <input type="range" id="musicVolume" min="0" max="1" step="0.01" value="1" onchange="changeMusicVolume()" />
+        <br />
+        <button onclick="removeMusic()">Remove Music</button>
+      </div>
+      <div id="settingsNotifications">
+        <label>
+          <input type="checkbox" id="notificationsToggle" onchange="toggleNotifications()" />
+          Enable Desktop Notifications
+        </label>
+      </div>
+      <button onclick="closeSettings()">Back</button>
+    </div>
+  </div>
+
+  <!-- Background Music Audio Element -->
+  <audio id="bgMusic" loop></audio>
+  
+  <!-- Firebase + SHA256 scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-database-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js"></script>
+  
+  <script>
+    /*********************** Firebase Initialization ************************/
+    const firebaseConfig = {
+      apiKey: "AIzaSyCN0KVGqw7PdcUI3RX8i-_CfOyQadDBcuI",
+      authDomain: "yaproomv2.firebaseapp.com",
+      projectId: "yaproomv2",
+      storageBucket: "yaproomv2.firebasestorage.app",
+      messagingSenderId: "155778580025",
+      appId: "1:155778580025:web:99f76220d897de01e3d7e8",
+      measurementId: "G-0SX9ZPJ227"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Connection check
+    const connectedRef = db.ref(".info/connected");
+    connectedRef.on("value", snapshot => {
+      console.log(snapshot.val() ? "Connected to Firebase" : "Not connected to Firebase");
+    });
+
+    /*********************** Global Variables & References ********************/
+    let currentUser = null;
+    let accountData = null;
+    let currentServer = { type: "public", id: "public", name: "Public Chat" };
+    let currentMessageListener = null;
+    let serverList = [];
+    const MAX_USERNAME = 20;
+    const MAX_MESSAGE = 100;
+    
+    const publicMessagesRef = db.ref("publicMessages");
+    const dmsRef = db.ref("dms");
+    const groupRoomsRef = db.ref("groupRooms");
+    const accountsRef = db.ref("accounts");
+    const presenceRef = db.ref("presence");
+
+    /*********************** Account Functions ************************/
+    function registerOrLoginAccount() {
+      const username = document.getElementById("accUsername").value.trim();
+      const password = document.getElementById("accPassword").value;
+      if (!username || !password) {
+        alert("Please enter username and password.");
+        return;
+      }
+      if (username.length > MAX_USERNAME) {
+        alert("Username must be 20 characters or less.");
+        return;
+      }
+      const passHash = sha256(password);
+      accountsRef.child(username).once("value").then(snapshot => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          if (data.passwordHash !== passHash) {
+            alert("Incorrect password.");
+            return;
+          } else {
+            currentUser = username;
+            accountData = data;
+            afterLogin();
+          }
+        } else {
+          const newAccount = {
+            passwordHash: passHash,
+            darkMode: false,
+            channels: {}
+          };
+          accountsRef.child(username).set(newAccount, error => {
+            if (error) alert("Error creating account: " + error);
+            else {
+              currentUser = username;
+              accountData = newAccount;
+              afterLogin();
+            }
+          });
+        }
+      });
+    }
+    
+    function afterLogin() {
+      localStorage.setItem("currentUser", currentUser);
+      localStorage.setItem("accountData", JSON.stringify(accountData));
+      document.getElementById("loginForm").style.display = "none";
+      document.getElementById("accountInfo").style.display = "block";
+      document.getElementById("currentAcc").textContent = currentUser;
+      serverList = [];
+      if (accountData.channels) {
+        for (let key in accountData.channels) {
+          serverList.push(accountData.channels[key]);
+        }
+      }
+      if (accountData.darkMode) {
+        document.getElementById("darkModeToggle").checked = true;
+        document.body.classList.add("dark-mode");
+      } else {
+        document.getElementById("darkModeToggle").checked = false;
+        document.body.classList.remove("dark-mode");
+      }
+    }
+    
+    function changeUsername() {
+      const newName = prompt("Enter new username (max " + MAX_USERNAME + " characters):");
+      if (!newName) return;
+      if (newName.length > MAX_USERNAME) {
+        alert("Username too long.");
+        return;
+      }
+      accountsRef.child(newName).once("value").then(snapshot => {
+        if (snapshot.exists()) {
+          alert("Username already taken.");
+        } else {
+          accountsRef.child(newName).set({
+            ...accountData,
+            passwordHash: accountData.passwordHash
+          }, error => {
+            if (error) alert("Error updating username: " + error);
+            else {
+              accountsRef.child(currentUser).remove();
+              currentUser = newName;
+              accountData = { ...accountData };
+              document.getElementById("currentAcc").textContent = currentUser;
+              accountsRef.child(currentUser).update(accountData);
+              localStorage.setItem("currentUser", currentUser);
+              localStorage.setItem("accountData", JSON.stringify(accountData));
+              alert("Username changed to " + currentUser);
+            }
+          });
+        }
+      });
+    }
+    
+    function changePassword() {
+      const newPass = prompt("Enter new password:");
+      if (!newPass) return;
+      const newHash = sha256(newPass);
+      accountsRef.child(currentUser).update({ passwordHash: newHash }, error => {
+        if (error) alert("Error changing password: " + error);
+        else {
+          accountData.passwordHash = newHash;
+          localStorage.setItem("accountData", JSON.stringify(accountData));
+          alert("Password changed successfully!");
+        }
+      });
+    }
+    
+    function logoutAccount() {
+      currentUser = null;
+      accountData = null;
+      serverList = [];
+      localStorage.removeItem("currentUser");
+      localStorage.removeItem("accountData");
+      document.getElementById("loginForm").style.display = "block";
+      document.getElementById("accountInfo").style.display = "none";
+      document.getElementById("accUsername").value = "";
+      document.getElementById("accPassword").value = "";
+      document.getElementById("chatWrapper").style.display = "none";
+      document.getElementById("mainMenu").style.display = "block";
+    }
+
+    /*********************** Chat & Server List Functions ************************/
+    function startChat() {
+      document.getElementById("mainMenu").style.display = "none";
+      document.getElementById("chatWrapper").style.display = "flex";
+      currentServer = { type: "public", id: "public", name: "Public Chat" };
+      updateServerListUI();
+      switchServer(currentServer);
+      let myPresenceRef = presenceRef.push();
+      myPresenceRef.set({ username: currentUser });
+      myPresenceRef.onDisconnect().remove();
+      presenceRef.on("value", updateMemberList);
+      listenForDMs();
+      listenForGroupRooms();
+    }
+    
+    function updateServerListUI() {
+      const listElem = document.getElementById("serverList");
+      listElem.innerHTML = "";
+      const publicDiv = document.createElement("div");
+      publicDiv.className = "server-item" + (currentServer.id === "public" ? " active" : "");
+      publicDiv.textContent = "Public Chat";
+      publicDiv.onclick = () => { switchServer({ type: "public", id: "public", name: "Public Chat" }); };
+      listElem.appendChild(publicDiv);
+      serverList.forEach(server => {
+        const item = document.createElement("div");
+        item.className = "server-item" + ((server.id === currentServer.id && server.type === currentServer.type) ? " active" : "");
+        item.textContent = server.name;
+        item.oncontextmenu = function(e) {
+          e.preventDefault();
+          if(server.type !== "public"){
+            openDeleteModal(server, e);
+          }
+        };
+        item.onclick = () => { switchServer(server); };
+        listElem.appendChild(item);
+      });
+      const plus = document.createElement("div");
+      plus.className = "plus-button";
+      plus.textContent = "+";
+      plus.title = "Add new channel";
+      plus.onclick = openPlusModal;
+      listElem.appendChild(plus);
+    }
+    
+    function switchServer(server) {
+      currentServer = server;
+      document.getElementById("currentServerName").textContent = server.name;
+      updateServerListUI();
+      loadMessagesForCurrentServer();
+    }
+    
+    function loadMessagesForCurrentServer() {
+      if (currentMessageListener) { currentMessageListener.off(); currentMessageListener = null; }
+      document.getElementById("messages").innerHTML = "";
+      let msgRef;
+      if (currentServer.type === "public") {
+        msgRef = publicMessagesRef;
+      } else if (currentServer.type === "dm") {
+        msgRef = db.ref("dms/" + currentServer.id + "/messages");
+      } else if (currentServer.type === "group") {
+        msgRef = db.ref("groupRooms/" + currentServer.id + "/messages");
+      }
+      currentMessageListener = msgRef;
+      currentMessageListener.on("child_added", snapshot => {
+        const msg = snapshot.val();
+        displayMessage(msg.user, msg.text, msg.timestamp);
+        checkForMentions(msg.user, msg.text);
+      });
+    }
+    
+    function sendMessage() {
+      const text = document.getElementById("messageInput").value.trim();
+      if (!text) return;
+      if (text.length > MAX_MESSAGE) { alert("Message can be at most 100 characters."); return; }
+      let msgRef;
+      if (currentServer.type === "public") {
+        msgRef = publicMessagesRef;
+      } else if (currentServer.type === "dm") {
+        msgRef = db.ref("dms/" + currentServer.id + "/messages");
+      } else if (currentServer.type === "group") {
+        msgRef = db.ref("groupRooms/" + currentServer.id + "/messages");
+      }
+      msgRef.push({
+        user: currentUser,
+        text: text,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      });
+      document.getElementById("messageInput").value = "";
+    }
+    
+    function displayMessage(user, text, timestamp) {
+      const li = document.createElement("li");
+      li.textContent = user + ": " + text;
+      if(timestamp){
+        li.title = new Date(timestamp).toLocaleString();
+      }
+      document.getElementById("messages").appendChild(li);
+      document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
+    }
+    
+    function updateMemberList(snapshot) {
+      const members = [];
+      snapshot.forEach(child => {
+        const data = child.val();
+        if (data.username) members.push(data.username);
+      });
+      const uniqueMembers = [...new Set(members)];
+      const listElem = document.getElementById("memberList");
+      listElem.innerHTML = "";
+      uniqueMembers.forEach(member => {
+        const li = document.createElement("li");
+        li.textContent = member;
+        listElem.appendChild(li);
+      });
+    }
+    
+    function returnToMainMenu() {
+      document.getElementById("chatWrapper").style.display = "none";
+      document.getElementById("mainMenu").style.display = "block";
+    }
+
+    /*********************** Channel (DM/Group) Functions ************************/
+    function listenForDMs() {
+      dmsRef.on("child_added", snapshot => {
+        const dmData = snapshot.val();
+        const dmKey = snapshot.key;
+        if (dmData.participants && dmData.participants.includes(currentUser)) {
+          if(accountData.channels && accountData.channels[dmKey]) return;
+          if (!serverList.some(s => s.type === "dm" && s.id === dmKey)) {
+            const other = dmData.participants.filter(u => u !== currentUser)[0] || "DM";
+            const channel = { type: "dm", id: dmKey, name: "DM: " + other };
+            serverList.push(channel);
+            updateServerListUI();
+          }
+        }
+      });
+    }
+    
+    function listenForGroupRooms() {
+      groupRoomsRef.on("child_added", snapshot => {
+        const roomData = snapshot.val();
+        const roomKey = snapshot.key;
+        if (!serverList.some(s => s.type === "group" && s.id === roomKey)) {
+          const channel = { type: "group", id: roomKey, name: roomData.name };
+          serverList.push(channel);
+          updateServerListUI();
+        }
+      });
+    }
+    
+    /*********************** Plus Modal Functions ************************/
+    let plusAction = null;
+    function openPlusModal() {
+      document.getElementById("plusModal").style.display = "block";
+    }
+    function closePlusModal() {
+      document.getElementById("plusModal").style.display = "none";
+    }
+    function selectPlusAction(action) {
+      plusAction = action;
+      closePlusModal();
+      const inputModal = document.getElementById("inputModal");
+      const titleElem = document.getElementById("inputModalTitle");
+      const inputField = document.getElementById("inputModalField");
+      if(action === "dm"){
+        titleElem.textContent = "Enter DM Username:";
+        inputField.placeholder = "Username";
+      } else {
+        titleElem.textContent = "Enter Room Name:";
+        inputField.placeholder = "Room Name";
+      }
+      inputField.value = "";
+      inputModal.style.display = "block";
+    }
+    function closeInputModal() {
+      document.getElementById("inputModal").style.display = "none";
+    }
+    function submitInputModal() {
+      const inputValue = document.getElementById("inputModalField").value.trim();
+      if(!inputValue) {
+        alert("Please enter a value.");
+        return;
+      }
+      closeInputModal();
+      if(plusAction === "dm"){
+        const participants = [currentUser, inputValue].sort();
+        const dmKey = participants.join("_");
+        dmsRef.child(dmKey).once("value", snapshot => {
+          if (!snapshot.exists()) {
+            dmsRef.child(dmKey).set({
+              participants: participants,
+              createdAt: firebase.database.ServerValue.TIMESTAMP
+            });
+          }
+          if (!accountData.channels) accountData.channels = {};
+          if (!accountData.channels[dmKey]) {
+            accountData.channels[dmKey] = { type: "dm", id: dmKey, name: "DM: " + inputValue };
+            accountsRef.child(currentUser).child("channels").set(accountData.channels);
+            serverList.push(accountData.channels[dmKey]);
+            updateServerListUI();
+          }
+        });
+      } else if(plusAction === "create" || plusAction === "join"){
+        const roomKey = inputValue;
+        groupRoomsRef.child(roomKey).once("value", snapshot => {
+          if (!snapshot.exists()) {
+            groupRoomsRef.child(roomKey).set({
+              name: inputValue,
+              createdBy: currentUser,
+              createdAt: firebase.database.ServerValue.TIMESTAMP
+            }, error => {
+              if (error) alert("Error creating group: " + error);
+            });
+          }
+          if (!accountData.channels) accountData.channels = {};
+          if (!accountData.channels[roomKey]) {
+            accountData.channels[roomKey] = { type: "group", id: roomKey, name: inputValue };
+            accountsRef.child(currentUser).child("channels").set(accountData.channels);
+            serverList.push(accountData.channels[roomKey]);
+            updateServerListUI();
+          }
+        });
+      }
+    }
+    
+    /*********************** Delete Modal Functions ************************/
+    let deleteCandidate = null;
+    function openDeleteModal(channel, e) {
+      deleteCandidate = channel;
+      const deleteModal = document.getElementById("deleteModal");
+      document.getElementById("deleteModalText").textContent =
+        "Delete " + (channel.type === "dm" ? "DM" : "Room") + " '" + channel.name + "'?";
+      const rect = e.target.getBoundingClientRect();
+      deleteModal.style.left = (rect.right + 5) + "px";
+      deleteModal.style.top = rect.top + "px";
+      deleteModal.style.display = "block";
+    }
+    function closeDeleteModal() {
+      document.getElementById("deleteModal").style.display = "none";
+      deleteCandidate = null;
+    }
+    function confirmDeleteChannel() {
+      if(deleteCandidate){
+        if(accountData.channels && accountData.channels[deleteCandidate.id]){
+          delete accountData.channels[deleteCandidate.id];
+          accountsRef.child(currentUser).child("channels").set(accountData.channels);
+          localStorage.setItem("accountData", JSON.stringify(accountData));
+        }
+        serverList = serverList.filter(s => !(s.type === deleteCandidate.type && s.id === deleteCandidate.id));
+        updateServerListUI();
+        if(currentServer.type === deleteCandidate.type && currentServer.id === deleteCandidate.id){
+          switchServer({ type:"public", id:"public", name:"Public Chat" });
+        }
+      }
+      closeDeleteModal();
+    }
+    
+    /*********************** Settings Functions ************************/
+    function openSettings() {
+      document.getElementById("settingsScreen").style.display = "block";
+    }
+    function closeSettings() {
+      document.getElementById("settingsScreen").style.display = "none";
+    }
+    function toggleDarkMode() {
+      const isDark = document.getElementById("darkModeToggle").checked;
+      if (isDark) {
+        document.body.classList.add("dark-mode");
+      } else {
+        document.body.classList.remove("dark-mode");
+      }
+      if (currentUser) {
+        accountsRef.child(currentUser).update({ darkMode: isDark });
+        accountData.darkMode = isDark;
+        localStorage.setItem("accountData", JSON.stringify(accountData));
+      }
+    }
+    function changeUIFont() {
+      const selectedFont = document.getElementById("fontSelect").value;
+      document.body.style.fontFamily = selectedFont;
+    }
+    
+    /*********************** Music Functions ************************/
+    function toggleMusic() {
+      const bgMusic = document.getElementById("bgMusic");
+      if (bgMusic.paused) {
+        bgMusic.play();
+      } else {
+        bgMusic.pause();
+      }
+    }
+    function changeMusicVolume() {
+      const vol = document.getElementById("musicVolume").value;
+      document.getElementById("bgMusic").volume = vol;
+    }
+    function removeMusic() {
+      const bgMusic = document.getElementById("bgMusic");
+      bgMusic.pause();
+      bgMusic.src = "";
+      alert("Background music removed.");
+    }
+    document.getElementById("musicFileInput") && document.getElementById("musicFileInput").addEventListener("change", function() {
+      const file = this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById("bgMusic").src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    /*********************** Notifications Functions ************************/
+    function toggleNotifications() {
+      const enabled = document.getElementById("notificationsToggle").checked;
+      localStorage.setItem("notificationsEnabled", enabled);
+      if (enabled) {
+        askNotificationPermission();
+      }
+    }
+    function askNotificationPermission() {
+      if (!("Notification" in window)) {
+        alert("This browser does not support desktop notifications.");
+        return;
+      }
+      if (Notification.permission !== "granted") {
+        Notification.requestPermission();
+      }
+    }
+    function showDesktopNotification(title, body) {
+      const notifEnabled = localStorage.getItem("notificationsEnabled") === "true";
+      if (!notifEnabled) return;
+      if (Notification.permission === "granted") {
+        new Notification(title, { body: body, icon: "https://via.placeholder.com/50" });
+      }
+    }
+    function checkForMentions(sender, text) {
+      const lowerText = text.toLowerCase();
+      const lowerUser = currentUser ? currentUser.toLowerCase() : "";
+      if (lowerText.indexOf("@" + lowerUser) !== -1) {
+        showDesktopNotification("Mention from " + sender, text);
+      }
+    }
+
+    /*********************** Chat Input Handling ************************/
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("messageInput").addEventListener("keydown", function(e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          const txt = this.value.trim();
+          if (txt) sendMessage();
+        }
+      });
+      const storedUser = localStorage.getItem("currentUser");
+      const storedAccount = localStorage.getItem("accountData");
+      if (storedUser && storedAccount) {
+        currentUser = storedUser;
+        accountData = JSON.parse(storedAccount);
+        document.getElementById("loginForm").style.display = "none";
+        document.getElementById("accountInfo").style.display = "block";
+        document.getElementById("currentAcc").textContent = currentUser;
+        if (accountData.darkMode) {
+          document.getElementById("darkModeToggle").checked = true;
+          document.body.classList.add("dark-mode");
+        }
+      }
+    });
+  </script>
+</body>
+</html>
